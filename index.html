@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f4ecd8">
+  <meta name="description" content="Hebrew/Greek original Bible with Roman transliteration and World English Bible — word learning and verse audio">
+  <title>Hebrew English Bible</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Noto+Serif+Hebrew:wght@400;700&family=Noto+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/reader.css">
+  <link rel="stylesheet" href="css/plan.css">
+</head>
+<body>
+  <div id="global-loader" class="global-loader" hidden>Loading…</div>
+  <p id="global-error" class="global-error" role="alert" hidden></p>
+
+  <div class="screen" data-screen="library">
+    <header class="top-bar top-bar--library">
+      <div class="top-bar__leading">
+        <button type="button" id="btn-guide" class="icon-btn" aria-label="How to use this app">Guide</button>
+        <button type="button" id="btn-about" class="icon-btn" aria-label="About the Bible versions">Versions</button>
+      </div>
+      <div class="top-bar__center">
+        <h1 class="app-title">Hebrew English Bible</h1>
+        <p class="app-subtitle app-subtitle--original" dir="rtl" lang="he">תנ״ך · Καινή Διαθήκη</p>
+      </div>
+      <div class="top-bar__actions">
+        <div class="theme-quick" role="group" aria-label="Display theme">
+          <button type="button" class="theme-icon-btn" data-theme-quick="day" aria-label="Day theme" title="Day">☀</button>
+          <button type="button" class="theme-icon-btn" data-theme-quick="sepia" aria-label="Sepia theme" title="Sepia">◐</button>
+          <button type="button" class="theme-icon-btn" data-theme-quick="night" aria-label="Night theme" title="Night">☾</button>
+        </div>
+        <button type="button" id="btn-plan" class="icon-btn">Reading Plan</button>
+        <button type="button" id="btn-notebook" class="icon-btn">Notebook</button>
+      </div>
+    </header>
+    <main id="library-list" class="library-list"></main>
+    <footer class="site-footer">
+      <p>Project of WordOnAir Labs</p>
+      <p class="legal">WLC + Nestle 1904 (PD) · WEB (PD) · Audio CC BY 4.0</p>
+    </footer>
+  </div>
+
+  <div class="screen" data-screen="chapters" hidden>
+    <header class="top-bar">
+      <button type="button" id="btn-back-library" class="back-btn">← Books</button>
+      <div class="top-bar__center">
+        <h2 id="chapter-title" class="chapter-title"></h2>
+        <p id="chapter-subtitle" class="chapter-subtitle"></p>
+      </div>
+      <button type="button" class="aa-btn btn-open-settings" aria-label="Reading settings">Aa</button>
+    </header>
+    <div id="chapter-audio-bar" class="chapter-audio-bar"></div>
+    <main id="chapter-grid" class="chapter-grid"></main>
+  </div>
+
+  <div class="screen" data-screen="plan" hidden>
+    <header class="top-bar">
+      <button type="button" id="btn-back-plan-home" class="back-btn">← Home</button>
+      <div class="top-bar__center">
+        <h2 class="chapter-title">Daily Reading Plan</h2>
+        <p class="chapter-subtitle">Book of Common Prayer · 814 days</p>
+      </div>
+      <button type="button" class="aa-btn btn-open-settings" aria-label="Display theme">Aa</button>
+    </header>
+    <main id="plan-dashboard" class="plan-dashboard"></main>
+  </div>
+
+  <div class="screen" data-screen="plan-day" hidden>
+    <header class="top-bar">
+      <button type="button" id="btn-back-plan" class="back-btn">← Plan</button>
+      <div class="top-bar__center">
+        <h2 id="plan-day-title" class="chapter-title"></h2>
+        <p id="plan-day-subtitle" class="chapter-subtitle"></p>
+      </div>
+    </header>
+    <main id="plan-day-content" class="plan-day-content"></main>
+  </div>
+
+  <div class="screen screen--reader" data-screen="reader" hidden data-book-id="">
+    <header class="reader-bar">
+      <button type="button" id="btn-back-chapters" class="back-btn">←</button>
+      <div class="reader-bar__titles">
+        <div id="reader-header-en" class="reader-bar__en"></div>
+        <div id="reader-header-orig" class="reader-bar__orig" dir="rtl" lang="he"></div>
+      </div>
+      <button type="button" id="btn-aa" class="aa-btn btn-open-settings" aria-label="Reading settings">Aa</button>
+    </header>
+
+    <div id="reader-shell" class="reader-shell">
+      <div id="measure-host" class="measure-host" aria-hidden="true">
+        <div id="measure" class="measure-column"></div>
+      </div>
+      <div class="reader-viewport">
+        <div id="page-track" class="page-track"></div>
+      </div>
+      <button type="button" id="btn-prev-page" class="page-nav page-nav--prev" aria-label="Previous page">‹</button>
+      <button type="button" id="btn-next-page" class="page-nav page-nav--next" aria-label="Next page">›</button>
+    </div>
+
+    <footer id="reader-footer" class="reader-footer"></footer>
+  </div>
+
+  <div class="screen" data-screen="notebook" hidden>
+    <header class="top-bar">
+      <button type="button" id="btn-back-home" class="back-btn">← Home</button>
+      <div class="top-bar__center">
+        <h2 class="chapter-title">My Notebook</h2>
+      </div>
+      <button type="button" class="aa-btn btn-open-settings" aria-label="Reading settings">Aa</button>
+    </header>
+    <main id="notebook-list" class="notebook-list"></main>
+  </div>
+
+  <div id="aa-sheet" class="aa-sheet" hidden>
+    <div class="aa-sheet__header">
+      <h2 id="aa-sheet-title">Reading settings</h2>
+      <button type="button" id="btn-close-aa" class="icon-btn">Close</button>
+    </div>
+    <p class="aa-label">Theme</p>
+    <div class="aa-btn-row">
+      <button type="button" data-theme-btn="day" class="chip">Day</button>
+      <button type="button" data-theme-btn="sepia" class="chip active">Sepia</button>
+      <button type="button" data-theme-btn="night" class="chip">Night</button>
+    </div>
+    <div id="aa-reader-only" class="aa-reader-only">
+      <label class="aa-row">
+        <span>Font size</span>
+        <span id="font-size-label">17px</span>
+      </label>
+      <input type="range" id="font-size" min="14" max="26" step="1" value="17">
+      <p class="aa-label">Margins</p>
+      <div class="aa-btn-row">
+        <button type="button" data-margin-btn="tight" class="chip">Tight</button>
+        <button type="button" data-margin-btn="medium" class="chip active">Medium</button>
+        <button type="button" data-margin-btn="wide" class="chip">Wide</button>
+      </div>
+      <label class="aa-row aa-row--toggle">
+        <span>Justified English</span>
+        <input type="checkbox" id="justify-toggle" checked>
+      </label>
+      <label class="aa-row aa-row--toggle">
+        <span>Learn words only</span>
+        <input type="checkbox" id="learn-words-toggle">
+      </label>
+    </div>
+  </div>
+
+  <div id="about-sheet" class="about-sheet" hidden>
+    <div class="about-sheet__header">
+      <h2>About the Bible versions</h2>
+      <button type="button" id="btn-close-about" class="icon-btn">Close</button>
+    </div>
+    <div id="about-content" class="about-sheet__body"></div>
+  </div>
+
+  <div id="guide-sheet" class="about-sheet" hidden>
+    <div class="about-sheet__header">
+      <h2>How to use this app</h2>
+      <button type="button" id="btn-close-guide" class="icon-btn">Close</button>
+    </div>
+    <div id="guide-content" class="about-sheet__body"></div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

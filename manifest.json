@@ -1,0 +1,33 @@
+{
+  "id": "./",
+  "name": "Hebrew English Bible",
+  "short_name": "Bible",
+  "lang": "en",
+  "categories": ["books", "education"],
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4ecd8",
+  "theme_color": "#f4ecd8",
+  "description": "Hebrew/Greek original languages with Roman transliteration and World English Bible. Word learning and verse audio.",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

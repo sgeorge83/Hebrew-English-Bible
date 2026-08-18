@@ -1,0 +1,206 @@
+.plan-dashboard,
+.plan-day-content {
+  flex: 1;
+  overflow: auto;
+  padding: 16px 14px 24px;
+}
+
+.plan-card {
+  padding: 16px;
+  margin-bottom: 14px;
+  border: 1px solid var(--bar-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+html[data-theme="night"] .plan-card {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.plan-card h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.plan-card p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.plan-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.plan-stat {
+  padding: 14px 12px;
+  border: 1px solid var(--bar-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.35);
+  text-align: center;
+}
+
+html[data-theme="night"] .plan-stat {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.plan-stat__value {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.plan-stat__label {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.plan-progress {
+  margin-top: 12px;
+}
+
+.plan-progress__bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+html[data-theme="night"] .plan-progress__bar {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.plan-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--chip-active);
+  transition: width 0.25s ease;
+}
+
+.plan-progress__text {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.plan-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.plan-btn {
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid var(--bar-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: var(--chip-bg);
+  color: var(--text);
+}
+
+.plan-btn--primary {
+  background: var(--chip-active);
+  color: var(--chip-active-text);
+  border-color: var(--chip-active);
+}
+
+.plan-btn--danger {
+  color: #a03030;
+  border-color: rgba(160, 48, 48, 0.4);
+  background: transparent;
+}
+
+html[data-theme="night"] .plan-btn--danger {
+  color: #e08585;
+  border-color: rgba(224, 133, 133, 0.4);
+}
+
+.plan-passage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.plan-passage-card {
+  width: 100%;
+  text-align: left;
+  padding: 14px;
+  border: 1px solid var(--bar-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  color: inherit;
+}
+
+html[data-theme="night"] .plan-passage-card {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.plan-passage-card:active {
+  transform: scale(0.99);
+}
+
+.plan-passage-card__title {
+  display: block;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.plan-passage-card__ref {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.plan-day-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.plan-complete-btn {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.plan-complete-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.offline-card {
+  margin-top: 8px;
+}
+
+.offline-card h3 {
+  font-size: 0.95rem;
+}
+
+.offline-card .plan-progress {
+  margin-top: 10px;
+}
+
+@media (min-width: 768px) {
+  .plan-dashboard,
+  .plan-day-content {
+    max-width: 640px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}

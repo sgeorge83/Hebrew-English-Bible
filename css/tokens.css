@@ -1,0 +1,48 @@
+:root {
+  --reader-font-size: 17px;
+  --reader-line-height: 1.6;
+  --reader-margin: 18px;
+  --font-english: "Merriweather", Georgia, "Times New Roman", serif;
+  --font-hebrew: "Noto Serif Hebrew", "Times New Roman", serif;
+  --font-greek: "Noto Serif", Georgia, "Times New Roman", serif;
+  --font-roman: Georgia, "Times New Roman", serif;
+}
+
+html[data-theme="day"] {
+  --bg: #fafafa;
+  --text: #2b2b2b;
+  --text-muted: #5c5c5c;
+  --bar-bg: #fafafa;
+  --bar-border: #e0e0e0;
+  --chip-bg: #efefef;
+  --chip-active: #2b2b2b;
+  --chip-active-text: #fafafa;
+  --footer-bg: #fafafa;
+  --word-key: #8b5a2b;
+}
+
+html[data-theme="sepia"] {
+  --bg: #f4ecd8;
+  --text: #3d2b1f;
+  --text-muted: #6b5344;
+  --bar-bg: #f4ecd8;
+  --bar-border: #dccfb8;
+  --chip-bg: #e8dcc4;
+  --chip-active: #3d2b1f;
+  --chip-active-text: #f4ecd8;
+  --footer-bg: #f4ecd8;
+  --word-key: #7a4a1f;
+}
+
+html[data-theme="night"] {
+  --bg: #1a1a1a;
+  --text: #e8e6e3;
+  --text-muted: #a8a6a3;
+  --bar-bg: #1a1a1a;
+  --bar-border: #333;
+  --chip-bg: #2a2a2a;
+  --chip-active: #e8e6e3;
+  --chip-active-text: #1a1a1a;
+  --footer-bg: #1a1a1a;
+  --word-key: #d4a574;
+}
