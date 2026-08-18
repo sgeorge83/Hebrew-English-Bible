@@ -30,7 +30,8 @@ Open `http://localhost:8080` (or the port shown).
 
 ## Deploy
 
-Push to `main` — GitHub Actions deploys to GitHub Pages automatically.
+1. In the repo on GitHub, go to **Settings → Pages** and set **Source** to **GitHub Actions** (one-time setup).
+2. Push to `main` — GitHub Actions deploys to GitHub Pages automatically.
 
 ## License
 
