@@ -2,6 +2,7 @@ import { playVerseAudio } from "./audio.js";
 
 let panelEl = null;
 let activeWordEl = null;
+let activeRomanEl = null;
 
 export function escapeHtml(text) {
   return String(text)
@@ -26,6 +27,10 @@ function clearActiveWord() {
     activeWordEl.classList.remove("word--active");
     activeWordEl = null;
   }
+  if (activeRomanEl) {
+    activeRomanEl.classList.remove("word--active");
+    activeRomanEl = null;
+  }
 }
 
 export function closeWordPanel() {
@@ -33,13 +38,49 @@ export function closeWordPanel() {
   if (panelEl) panelEl.hidden = true;
 }
 
-export function openWordPanel({ word, reference, book, chapter, verse, anchorEl }) {
+function audioRefFrom(word, fallback) {
+  const audio = word?.audio;
+  return {
+    book: Number(audio?.book || fallback.book),
+    chapter: Number(audio?.chapter || fallback.chapter),
+    verse: Number(audio?.verse || fallback.verse),
+  };
+}
+
+async function playAlignedAudio(btn, book, chapter, verse) {
+  if (!book || !chapter || !verse) {
+    btn.textContent = "Audio unavailable";
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = "Loading audio…";
+  try {
+    await playVerseAudio(book, chapter, verse);
+    btn.textContent = "Play verse audio";
+  } catch (err) {
+    btn.textContent = "Audio unavailable";
+    console.warn(err);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+export function openWordPanel({ word, reference, book, chapter, verse, anchorEl, autoPlay = false }) {
   const panel = ensurePanel();
   clearActiveWord();
   if (anchorEl) {
     anchorEl.classList.add("word--active");
     activeWordEl = anchorEl;
+    const pair = anchorEl.closest(".verse-pair");
+    const roman = pair?.querySelector(`.roman-token[data-word="${anchorEl.dataset.word}"]`);
+    if (roman) {
+      roman.classList.add("word--active");
+      activeRomanEl = roman;
+    }
   }
+
+  const audio = audioRefFrom(word, { book, chapter, verse });
+  const canPlay = Boolean(word.key && audio.book && audio.chapter && audio.verse);
 
   panel.innerHTML = `
     <div class="word-learn-panel__header">
@@ -50,27 +91,34 @@ export function openWordPanel({ word, reference, book, chapter, verse, anchorEl 
     <p class="word-learn-panel__roman">${escapeHtml(word.transliteration)}</p>
     <p class="word-learn-panel__gloss">${escapeHtml(word.gloss || "")}</p>
     ${word.strongs ? `<p class="word-learn-panel__strongs">${escapeHtml(word.strongs)}</p>` : ""}
-    <button type="button" class="word-learn-panel__play plan-btn plan-btn--primary">Play verse audio</button>
-    <p class="word-learn-panel__credit">Audio: CC BY 4.0 · MP3_OpenHebrewGreekBible_fast</p>
+    ${
+      canPlay
+        ? `<button type="button" class="word-learn-panel__play plan-btn plan-btn--primary">Play verse audio</button>
+           <p class="word-learn-panel__credit">Audio: CC BY 4.0 · verse ${audio.book}:${audio.chapter}:${audio.verse}</p>`
+        : `<p class="word-learn-panel__credit">No verse audio mapped for this word.</p>`
+    }
   `;
 
   panel.querySelector(".word-learn-panel__close").addEventListener("click", closeWordPanel);
-  panel.querySelector(".word-learn-panel__play").addEventListener("click", async () => {
-    const btn = panel.querySelector(".word-learn-panel__play");
-    btn.disabled = true;
-    btn.textContent = "Playing…";
-    try {
-      await playVerseAudio(book, chapter, verse);
-    } catch (err) {
-      btn.textContent = "Audio unavailable";
-      console.warn(err);
-    } finally {
-      btn.disabled = false;
-      if (btn.textContent === "Playing…") btn.textContent = "Play verse audio";
-    }
-  });
+  const playBtn = panel.querySelector(".word-learn-panel__play");
+  if (playBtn) {
+    playBtn.addEventListener("click", () => playAlignedAudio(playBtn, audio.book, audio.chapter, audio.verse));
+    if (autoPlay) playAlignedAudio(playBtn, audio.book, audio.chapter, audio.verse);
+  }
 
   panel.hidden = false;
+}
+
+function resolveLocation(pair, word, root) {
+  const audio = word?.audio;
+  const verseNum = Number(pair.dataset.verse);
+  const bookFromPair = Number(pair.dataset.bookId);
+  const chapterFromPair = Number(pair.dataset.chapter);
+  return {
+    book: Number(audio?.book || bookFromPair || window.__hebBibleBookId),
+    chapter: Number(audio?.chapter || chapterFromPair || window.__hebBibleChapter),
+    verse: Number(audio?.verse || verseNum),
+  };
 }
 
 export function bindWordLearn(root) {
@@ -82,30 +130,30 @@ export function bindWordLearn(root) {
     if (!pair) return;
 
     const verseNum = Number(pair.dataset.verse);
-    const chapterNum = Number(pair.dataset.chapter || root.closest("[data-chapter]")?.dataset.chapter);
-    const bookId = Number(pair.dataset.bookId || root.closest("[data-book-id]")?.dataset.bookId);
     const wordIndex = Number(wordEl.dataset.word);
 
-    const verseData = window.__hebBibleCurrentVerses?.find(
-      (v) =>
-        v.verse === verseNum &&
-        (pair.dataset.chapter ? v.chapter === Number(pair.dataset.chapter) : true)
-    );
+    const verseData = window.__hebBibleCurrentVerses?.find((v) => {
+      if (v.verse !== verseNum) return false;
+      if (pair.dataset.chapter && v.chapter != null) {
+        return v.chapter === Number(pair.dataset.chapter);
+      }
+      return true;
+    });
     const word = verseData?.words?.[wordIndex];
     if (!word) return;
 
     e.stopPropagation();
-    const book = bookId || window.__hebBibleBookId;
-    const chapter = chapterNum || window.__hebBibleChapter;
-    const ref = `${window.__hebBibleBookName || "Bible"} ${chapter}:${verseNum}`;
+    const loc = resolveLocation(pair, word, root);
+    const ref = `${window.__hebBibleBookName || "Bible"} ${loc.chapter}:${loc.verse}`;
 
     openWordPanel({
       word,
       reference: ref,
-      book,
-      chapter,
-      verse: verseNum,
+      book: loc.book,
+      chapter: loc.chapter,
+      verse: loc.verse,
       anchorEl: wordEl,
+      autoPlay: Boolean(word.key),
     });
   });
 }

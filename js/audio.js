@@ -1,11 +1,11 @@
 /**
- * Verse audio: stream from MP3_OpenHebrewGreekBible_fast ZIP archives,
- * cache blobs in IndexedDB, optional per-book offline download.
+ * Verse audio from MP3_OpenHebrewGreekBible_fast.
+ * Zip layout: {book}_{chapter}/OHGB_{book}_{chapter}_{verse}.mp3
  */
 import { AUDIO_BASE } from "./config.js";
 
 const DB_NAME = "hebrew-english-bible-audio";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE = "verse-audio";
 
 export const BOOK_AUDIO_ZIPS = {
@@ -80,6 +80,8 @@ export const BOOK_AUDIO_ZIPS = {
 let jsZipPromise = null;
 let dbPromise = null;
 let currentAudio = null;
+const zipCache = new Map();
+const zipLoads = new Map();
 
 function openDb() {
   if (dbPromise) return dbPromise;
@@ -105,32 +107,52 @@ async function loadJsZip() {
 }
 
 function cacheKey(book, chapter, verse) {
-  return `${book}/${chapter}/${verse}`;
+  return `${Number(book)}/${Number(chapter)}/${Number(verse)}`;
 }
 
-export function verseFilenameCandidates(book, chapter, verse) {
-  const b = String(book).padStart(2, "0");
-  const c = String(chapter).padStart(3, "0");
-  const v = String(verse).padStart(3, "0");
+export function verseEntryCandidates(book, chapter, verse) {
+  const b = Number(book);
+  const c = Number(chapter);
+  const v = Number(verse);
+  const b2 = String(b).padStart(2, "0");
   return [
-    `${b}${c}${v}.mp3`,
-    `${book}_${c}_${v}.mp3`,
-    `${b}_${c}_${v}.mp3`,
-    `${book}_${chapter}_${verse}.mp3`,
-    `${b}C${c}V${v}.mp3`,
-    `${b}-${c}-${v}.mp3`,
+    `${b}_${c}/OHGB_${b}_${c}_${v}.mp3`,
+    `${b2}_${c}/OHGB_${b}_${c}_${v}.mp3`,
+    `${b}_${c}/OHGB_${b2}_${c}_${v}.mp3`,
+    `OHGB_${b}_${c}_${v}.mp3`,
   ];
 }
 
 function findEntryInZip(zip, book, chapter, verse) {
-  const names = Object.keys(zip.files);
-  const candidates = new Set(verseFilenameCandidates(book, chapter, verse));
-  for (const name of names) {
-    const base = name.split("/").pop();
-    if (candidates.has(base)) return name;
+  const files = zip.files;
+  for (const path of verseEntryCandidates(book, chapter, verse)) {
+    if (files[path] && !files[path].dir) return path;
   }
-  const suffix = `C${String(chapter).padStart(3, "0")}V${String(verse).padStart(3, "0")}`;
-  return names.find((n) => n.endsWith(".mp3") && n.includes(suffix)) ?? null;
+
+  const wanted = `OHGB_${Number(book)}_${Number(chapter)}_${Number(verse)}.mp3`.toLowerCase();
+  for (const name of Object.keys(files)) {
+    if (files[name].dir) continue;
+    const base = name.split("/").pop().toLowerCase();
+    if (base === wanted) return name;
+  }
+  return null;
+}
+
+function zipsForChapter(book, chapter) {
+  const zips = BOOK_AUDIO_ZIPS[Number(book)] ?? [];
+  const ranged = [];
+  const whole = [];
+  for (const name of zips) {
+    const match = name.match(/_(\d+)-(\d+)\.zip$/);
+    if (match) {
+      const start = Number(match[1]);
+      const end = Number(match[2]);
+      if (chapter >= start && chapter <= end) ranged.push(name);
+    } else {
+      whole.push(name);
+    }
+  }
+  return ranged.length ? ranged : whole.length ? whole : zips;
 }
 
 async function getCachedBlob(book, chapter, verse) {
@@ -153,27 +175,74 @@ async function putCachedBlob(book, chapter, verse, blob) {
   });
 }
 
+function zipUrls(zipName) {
+  return [
+    `${AUDIO_BASE}/${zipName}`,
+    `https://media.githubusercontent.com/media/eliranwong/MP3_OpenHebrewGreekBible_fast/main/${zipName}`,
+  ];
+}
+
+async function fetchZipBuffer(zipName) {
+  let lastError = null;
+  for (const url of zipUrls(zipName)) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        lastError = new Error(`Audio archive not found (${response.status}): ${zipName}`);
+        continue;
+      }
+      return response.arrayBuffer();
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError ?? new Error(`Audio archive not found: ${zipName}`);
+}
+
+async function loadZip(zipName) {
+  if (zipCache.has(zipName)) return zipCache.get(zipName);
+  if (zipLoads.has(zipName)) return zipLoads.get(zipName);
+
+  const pending = (async () => {
+    const JSZip = await loadJsZip();
+    const buffer = await fetchZipBuffer(zipName);
+    const zip = await JSZip.loadAsync(buffer);
+    zipCache.set(zipName, zip);
+    zipLoads.delete(zipName);
+    return zip;
+  })().catch((err) => {
+    zipLoads.delete(zipName);
+    throw err;
+  });
+
+  zipLoads.set(zipName, pending);
+  return pending;
+}
+
 async function extractVerseFromZip(zipName, book, chapter, verse) {
-  const JSZip = await loadJsZip();
-  const url = `${AUDIO_BASE}/${zipName}`;
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`Audio archive not found: ${zipName}`);
-  const zip = await JSZip.loadAsync(await response.arrayBuffer());
+  const zip = await loadZip(zipName);
   const entry = findEntryInZip(zip, book, chapter, verse);
-  if (!entry) throw new Error(`Verse audio not found in ${zipName}`);
+  if (!entry) throw new Error(`Verse audio not found: OHGB_${book}_${chapter}_${verse}.mp3`);
   return zip.file(entry).async("blob");
 }
 
 export async function getVerseAudioBlob(book, chapter, verse) {
-  const cached = await getCachedBlob(book, chapter, verse);
+  const b = Number(book);
+  const c = Number(chapter);
+  const v = Number(verse);
+  if (!b || !c || !v) {
+    throw new Error("Missing book, chapter, or verse for audio");
+  }
+
+  const cached = await getCachedBlob(b, c, v);
   if (cached) return cached;
 
-  const zips = BOOK_AUDIO_ZIPS[book] ?? [];
+  const zips = zipsForChapter(b, c);
   let lastError = null;
   for (const zipName of zips) {
     try {
-      const blob = await extractVerseFromZip(zipName, book, chapter, verse);
-      await putCachedBlob(book, chapter, verse, blob);
+      const blob = await extractVerseFromZip(zipName, b, c, v);
+      await putCachedBlob(b, c, v, blob);
       return blob;
     } catch (err) {
       lastError = err;
@@ -204,31 +273,28 @@ export function isBookAudioDownloaded(bookId) {
   return localStorage.getItem(`audioBookDownloaded:${bookId}`) === "yes";
 }
 
+function parseOhgbName(path) {
+  const base = path.split("/").pop().replace(/\.mp3$/i, "");
+  const match = base.match(/^OHGB_(\d+)_(\d+)_(\d+)$/i);
+  if (!match) return null;
+  return { book: Number(match[1]), chapter: Number(match[2]), verse: Number(match[3]) };
+}
+
 export async function downloadBookAudio(bookId, onProgress) {
   const zips = BOOK_AUDIO_ZIPS[bookId];
   if (!zips?.length) throw new Error("No audio for this book");
 
-  const JSZip = await loadJsZip();
   let done = 0;
   const total = zips.length;
 
   for (const zipName of zips) {
-    const response = await fetch(`${AUDIO_BASE}/${zipName}`);
-    if (!response.ok) throw new Error(`Failed to download ${zipName}`);
-    const zip = await JSZip.loadAsync(await response.arrayBuffer());
-
-    const entries = Object.keys(zip.files).filter((n) => n.endsWith(".mp3"));
+    const zip = await loadZip(zipName);
+    const entries = Object.keys(zip.files).filter((n) => n.toLowerCase().endsWith(".mp3"));
     for (const entry of entries) {
+      const parsed = parseOhgbName(entry);
+      if (!parsed) continue;
       const blob = await zip.file(entry).async("blob");
-      const base = entry.split("/").pop().replace(".mp3", "");
-      const match =
-        base.match(/^(\d{2})(\d{3})(\d{3})$/) ??
-        base.match(/^(\d+)_(\d+)_(\d+)$/) ??
-        base.match(/^(\d+)C(\d{3})V(\d{3})$/i);
-      if (match) {
-        const [, b, c, v] = match;
-        await putCachedBlob(Number(b), Number(c), Number(v), blob);
-      }
+      await putCachedBlob(parsed.book, parsed.chapter, parsed.verse, blob);
     }
 
     done += 1;

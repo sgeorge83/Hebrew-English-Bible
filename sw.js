@@ -1,4 +1,4 @@
-const CACHE_NAME = "hebrew-english-bible-v1";
+const CACHE_NAME = "hebrew-english-bible-v2";
 const DATA_CACHE = "hebrew-english-bible-data-v1";
 
 const FONT_HOSTS = ["fonts.googleapis.com", "fonts.gstatic.com"];

@@ -36,12 +36,8 @@ export function buildVerseElement(verse, settings, highlightColor) {
   const el = document.createElement("article");
   el.className = "verse-pair";
   el.dataset.verse = String(verse.verse);
-  if (verse.chapter != null) {
-    el.dataset.chapter = String(verse.chapter);
-  }
-  if (verse.bookId != null) {
-    el.dataset.bookId = String(verse.bookId);
-  }
+  el.dataset.chapter = String(verse.chapter ?? "");
+  el.dataset.bookId = String(verse.bookId ?? "");
 
   const num = document.createElement("div");
   num.className = "verse-num";

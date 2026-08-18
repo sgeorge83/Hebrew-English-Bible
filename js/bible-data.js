@@ -37,6 +37,8 @@ export function mergeChapters(originalChapter, englishChapter) {
     const orig = originalByVerse.get(verse);
     verses.push({
       verse,
+      bookId,
+      chapter: originalChapter.chapter,
       script: orig?.script ?? null,
       original: orig?.text ?? null,
       transliteration: orig?.transliteration ?? null,
